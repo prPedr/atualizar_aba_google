@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Mudar Slides",
+  "version": "1.1",
+  "description": "Troca de abas a cada 25s e atualiza a pagina.",
+  "permissions": ["tabs", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Ativar/Desativar Auto Switch"
+  }
+}
