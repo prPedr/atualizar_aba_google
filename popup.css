@@ -1,0 +1,63 @@
+body {
+    font-family: sans-serif;
+    width: 300px;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+h2 {
+    text-align: center;
+    margin: 0;
+    color: #333;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+label {
+    font-size: 14px;
+    color: #555;
+}
+
+input[type="number"] {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#btn-iniciar-parar.iniciado {
+    background-color: #f44336;
+}
+
+#btn-iniciar-parar.parado {
+    background-color: #4CAF50;
+}
+
+#status span.parado {
+    color: #f44336;
+    font-weight: bold;
+}
+
+#status span.iniciado {
+    color: #4CAF50;
+    font-weight: bold;
+}

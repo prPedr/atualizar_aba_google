@@ -1,57 +1,64 @@
 let habilitado = false;
 let intervaloId = null;
-let ultimaAbaId = null;
 
-chrome.action.onClicked.addListener(() => {
-  habilitado = !habilitado;
+async function iniciarTrocaAutomatica() {
+    const data = await chrome.storage.sync.get({ intervalo: 25, atraso: 20 });
+    const intervaloMs = data.intervalo * 1000;
+    const atrasoMs = data.atraso * 1000;
 
-  if (habilitado) {
-    iniciarTrocaAutomatica();
-    chrome.action.setBadgeText({ text: "ON" });
-    chrome.action.setBadgeBackgroundColor({ color: "#4CAF50" });
-  } else {
-    pararTrocaAutomatica();
-    chrome.action.setBadgeText({ text: "" });
-  }
-});
+    if (intervaloId) clearInterval(intervaloId);
 
-function iniciarTrocaAutomatica() {
-  intervaloId = setInterval(async () => {
-    const abas = await chrome.tabs.query({ currentWindow: true });
-    if (abas.length <= 1) return;
+    intervaloId = setInterval(async () => {
+        const abas = await chrome.tabs.query({ currentWindow: true });
+        if (abas.length <= 1) return;
 
-    const abaAtiva = abas.find(a => a.active);
-    if (!abaAtiva) return;
+        const abaAtiva = abas.find(a => a.active);
+        if (!abaAtiva) return;
 
-    const indiceAtual = abas.findIndex(a => a.id === abaAtiva.id);
-    const proximoIndice = (indiceAtual + 1) % abas.length;
-    const proximaAba = abas[proximoIndice];
+        const indiceAtual = abas.findIndex(a => a.id === abaAtiva.id);
+        const proximoIndice = (indiceAtual + 1) % abas.length;
+        const proximaAba = abas[proximoIndice];
 
-    recarregarPagina(proximaAba.id);
+        try {
+            await chrome.tabs.reload(proximaAba.id);
+        } catch (error) {
+            console.log(`Não foi possível recarregar a aba ${proximaAba.id}. Pode ser uma página protegida.`);
+            return;
+        }
 
-    setTimeout(async () => {
-      await chrome.tabs.update(proximaAba.id, { active: true });
-      ultimaAbaId = proximaAba.id;
-    }, 20000);
-  }, 25000);
+        setTimeout(async () => {
+            try {
+                await chrome.tabs.update(proximaAba.id, { active: true });
+            } catch (error) {
+                console.log(`Não foi possível ativar a aba ${proximaAba.id}.`);
+            }
+        }, atrasoMs);
+
+    }, intervaloMs);
 }
 
 function pararTrocaAutomatica() {
-  if (intervaloId) {
-    clearInterval(intervaloId);
-    intervaloId = null;
-  }
+    if (intervaloId) {
+        clearInterval(intervaloId);
+        intervaloId = null;
+    }
 }
 
-chrome.tabs.onActivated.addListener((infoAtivacao) => {
-  if (habilitado && ultimaAbaId !== infoAtivacao.tabId) {
-    setTimeout(() => {
-      recarregarPagina(infoAtivacao.tabId);
-      ultimaAbaId = infoAtivacao.tabId;
-    }, 300);
-  }
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === 'toggle') {
+        habilitado = !habilitado;
+        if (habilitado) {
+            iniciarTrocaAutomatica();
+            chrome.action.setBadgeText({ text: 'ON' });
+            chrome.action.setBadgeBackgroundColor({ color: '#4CAF50' });
+        } else {
+            pararTrocaAutomatica();
+            chrome.action.setBadgeText({ text: '' });
+        }
+        sendResponse({ habilitado });
+    } else if (request.action === 'getStatus') {
+        sendResponse({ habilitado });
+    }
+
+    return true; 
 });
-
-function recarregarPagina(abaId) {
-  chrome.tabs.reload(abaId);
-}
